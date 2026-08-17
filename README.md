@@ -1,5 +1,7 @@
 # MangaVerse
 
+**[🚀 View Live Demo on Vercel](https://mangaverse-s94vhub7w-chamuditha-dev.vercel.app/)**
+
 MangaVerse is a premium, modern, and high-performance web application for reading manga, manhwa, and manhua. Built with Next.js App Router, it provides a seamless, ad-free reading experience with personalized libraries, reading history synchronization, and advanced discovery tools.
 
 ## Features
