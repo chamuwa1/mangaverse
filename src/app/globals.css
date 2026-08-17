@@ -356,3 +356,15 @@ button, a {
     gap: 24px;
   }
 }
+
+.manga-cover-col {
+  position: sticky;
+  top: 84px;
+}
+
+@media (max-width: 768px) {
+  .manga-cover-col {
+    position: relative;
+    top: 0;
+  }
+}

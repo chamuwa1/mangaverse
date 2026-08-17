@@ -79,7 +79,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
       <div className="manga-detail-layout">
 
         {/* Left: Cover */}
-        <div style={{ position: "sticky", top: "84px" }}>
+        <div className="manga-cover-col">
           <div style={{
             borderRadius: "20px",
             overflow: "hidden",
