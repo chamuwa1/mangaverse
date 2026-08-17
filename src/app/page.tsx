@@ -1,65 +1,148 @@
-import Image from "next/image";
+import { getTrendingManga } from "@/lib/api/anilist";
+import { getLatestUpdates, getPopularManga } from "@/lib/api/mangadex";
+import { HeroBanner } from "@/components/home/HeroBanner";
+import { MangaSection } from "@/components/home/MangaSection";
+import { GenreStrip } from "@/components/home/GenreStrip";
+import { ContinueReading } from "@/components/home/ContinueReading";
+import Link from "next/link";
+import type { Metadata } from "next";
 
-export default function Home() {
+export const metadata: Metadata = {
+  title: "MangaVerse — Read Manga, Manhua & Comics Free",
+  description:
+    "Discover and read manga, manhwa, manhua online for free. Trending titles, latest updates, and your personal library — all in one place.",
+};
+
+export const revalidate = 3600; // Revalidate every hour
+
+export default async function HomePage() {
+  // Fetch data in parallel — server-side, no waterfall
+  const [trendingData, latestData, popularData] = await Promise.allSettled([
+    getTrendingManga(8),
+    getLatestUpdates(18),
+    getPopularManga(18),
+  ]);
+
+  const trendingManga =
+    trendingData.status === "fulfilled"
+      ? trendingData.value.Page.media
+      : [];
+
+  const latestManga =
+    latestData.status === "fulfilled"
+      ? latestData.value.data
+      : [];
+
+  const popularManga =
+    popularData.status === "fulfilled"
+      ? popularData.value.data
+      : [];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div style={{ paddingBottom: "80px" }}>
+      {/* Hero */}
+      <HeroBanner featuredManga={trendingManga} />
+
+      {/* Continue Reading */}
+      <ContinueReading />
+
+      {/* Genre Strip */}
+      <GenreStrip />
+
+      {/* Latest Updates */}
+      <MangaSection
+        title="Latest Updates"
+        subtitle="Fresh chapters added today"
+        manga={latestManga}
+        viewAllHref="/browse?sort=latest"
+      />
+
+      {/* Popular */}
+      <MangaSection
+        title="Most Popular"
+        subtitle="All-time fan favourites"
+        manga={popularManga}
+        viewAllHref="/browse?sort=popular"
+      />
+
+      {/* Trending (AniList) */}
+      {trendingManga.length > 0 && (
+        <section style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 24px 60px" }}>
+          <div style={{ marginBottom: "32px" }}>
+            <h2 style={{ fontSize: "clamp(20px,3vw,28px)", color: "var(--text-primary)", marginBottom: "6px" }}>
+              🔥 Trending Now
+            </h2>
+            <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>
+              What everyone is reading right now
+            </p>
+          </div>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+            gap: "20px",
+          }}>
+            {trendingManga.map((media) => {
+              const title = media.title.english || media.title.romaji;
+              return (
+                <Link
+                  key={media.id}
+                  href={`/browse?q=${encodeURIComponent(title)}`}
+                  style={{ textDecoration: "none", display: "block" }}
+                >
+                  <div className="card" style={{ overflow: "hidden", cursor: "pointer", height: "100%" }}>
+                    <div style={{ position: "relative", aspectRatio: "2/3", background: "var(--bg-elevated)" }}>
+                      <img
+                        src={media.coverImage.extraLarge || media.coverImage.large}
+                        alt={title}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        loading="lazy"
+                      />
+                      {media.averageScore && (
+                        <div style={{
+                          position: "absolute",
+                          top: "10px",
+                          right: "10px",
+                          background: "rgba(0,0,0,0.75)",
+                          backdropFilter: "blur(8px)",
+                          borderRadius: "8px",
+                          padding: "3px 8px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          color: "#fbbf24",
+                        }}>
+                          ⭐ {(media.averageScore / 10).toFixed(1)}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ padding: "12px" }}>
+                      <p style={{
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        color: "var(--text-primary)",
+                        lineHeight: 1.3,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}>
+                        {title}
+                      </p>
+                      {media.genres[0] && (
+                        <span className="genre-tag" style={{ marginTop: "6px", fontSize: "10px", padding: "2px 8px" }}>
+                          {media.genres[0]}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
