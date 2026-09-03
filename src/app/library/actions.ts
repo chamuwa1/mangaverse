@@ -141,3 +141,18 @@ export async function clearAllHistoryAction() {
   revalidatePath("/library");
   return { success: true };
 }
+
+export async function getRecentReadingHistoryAction() {
+  const session = await auth();
+  if (!session?.user?.id) return [];
+
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("reading_history")
+    .select("manga_id, chapter_id, manga_title, cover_url, chapter_num, updated_at")
+    .eq("user_id", session.user.id)
+    .order("updated_at", { ascending: false })
+    .limit(10);
+
+  return data || [];
+}

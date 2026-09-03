@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Settings, RefreshCw, Database, Server, ExternalLink, ShieldCheck } from "lucide-react";
+import { RefreshCw, Database, Server, ExternalLink, ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface SettingsStats {

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { Search, BookOpen, Library, Menu, X, LogIn, LogOut, User, ChevronDown, Sparkles, Home, Shield } from "lucide-react";
+import { Search, Library, Menu, X, LogIn, LogOut, User, ChevronDown, Sparkles, Home, Shield } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -59,7 +59,9 @@ export function Navbar() {
     }
   };
 
-
+  if (pathname?.includes('/chapter/')) {
+    return null;
+  }
 
   return (
     <>
@@ -333,7 +335,7 @@ export function Navbar() {
                         {session.user?.email}
                       </div>
                     </div>
-                    {(session.user as any).isAdmin && (
+                    {(session.user as { isAdmin?: boolean })?.isAdmin && (
                       <Link
                         href="/admin"
                         onClick={() => setUserMenuOpen(false)}
@@ -427,14 +429,33 @@ export function Navbar() {
                 )}
               </div>
             ) : (
-              <button
-                id="nav-signin-btn"
-                onClick={() => signIn()}
-                className="btn-primary hide-mobile"
-                style={{ padding: "8px 16px", fontSize: "13px" }}
-              >
-                <LogIn size={14} /> Sign In
-              </button>
+              <div className="hide-mobile" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <button
+                  id="nav-signin-btn"
+                  onClick={() => signIn()}
+                  style={{
+                    padding: "8px 16px", 
+                    fontSize: "13px", 
+                    background: "transparent", 
+                    border: "none", 
+                    color: "var(--text-secondary)", 
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
+                >
+                  Sign In
+                </button>
+                <button
+                  id="nav-signup-btn"
+                  onClick={() => signIn()}
+                  className="btn-primary"
+                  style={{ padding: "8px 16px", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}
+                >
+                  <Sparkles size={14} /> Sign Up
+                </button>
+              </div>
             )}
 
             <button
@@ -594,7 +615,7 @@ export function Navbar() {
                   <Library size={16} /> My Library
                 </Link>
 
-                {(session.user as any).isAdmin && (
+                {(session.user as { isAdmin?: boolean })?.isAdmin && (
                   <Link
                     href="/admin"
                     onClick={() => setMenuOpen(false)}
@@ -637,26 +658,49 @@ export function Navbar() {
                 </button>
               </>
             ) : (
-              <button
-                onClick={() => signIn()}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  padding: "12px 16px",
-                  borderRadius: "10px",
-                  color: "white",
-                  fontSize: "15px",
-                  fontWeight: "500",
-                  background: "var(--gradient-main)",
-                  border: "none",
-                  cursor: "pointer",
-                  width: "100%",
-                  justifyContent: "center",
-                }}
-              >
-                <LogIn size={16} /> Sign In
-              </button>
+              <>
+                <button
+                  onClick={() => signIn()}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    color: "var(--text-primary)",
+                    fontSize: "15px",
+                    fontWeight: "500",
+                    background: "var(--bg-elevated)",
+                    border: "1px solid var(--border-default)",
+                    cursor: "pointer",
+                    width: "100%",
+                    justifyContent: "center",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <LogIn size={16} /> Sign In
+                </button>
+                <button
+                  onClick={() => signIn()}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    color: "white",
+                    fontSize: "15px",
+                    fontWeight: "500",
+                    background: "var(--gradient-main)",
+                    border: "none",
+                    cursor: "pointer",
+                    width: "100%",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Sparkles size={16} /> Sign Up
+                </button>
+              </>
             )}
           </div>
         )}
@@ -706,7 +750,7 @@ export function Navbar() {
               placeholder="Search manga, manhwa, manhua..."
               style={{
                 width: "100%",
-                padding: "18px 20px 18px 52px",
+                padding: "18px 90px 18px 52px",
                 borderRadius: "16px",
                 border: "1px solid var(--border-accent)",
                 background: "var(--bg-elevated)",
@@ -716,6 +760,25 @@ export function Navbar() {
                 boxShadow: "var(--shadow-glow-pink)",
               }}
             />
+            <button
+              type="submit"
+              style={{
+                position: "absolute",
+                right: "8px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "var(--accent-pink)",
+                border: "none",
+                borderRadius: "10px",
+                padding: "10px 16px",
+                color: "white",
+                fontWeight: 600,
+                fontSize: "13px",
+                cursor: "pointer",
+              }}
+            >
+              Search
+            </button>
           </form>
         </div>
       )}

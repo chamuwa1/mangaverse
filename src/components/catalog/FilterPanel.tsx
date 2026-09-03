@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Check, SlidersHorizontal, X } from "lucide-react";
 
 export const GENRE_TAGS = {
@@ -50,23 +50,16 @@ export function FilterPanel() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // State mapped from URL
-  const [sort, setSort] = useState("latest");
-  const [status, setStatus] = useState<string[]>([]);
-  const [tags, setTags] = useState<string[]>([]);
-  const [demographic, setDemographic] = useState<string[]>([]);
-  const [rating, setRating] = useState<string[]>(["safe", "suggestive"]);
+  // State derived directly from URL (no useEffect syncing needed)
+  const sort = searchParams.get("sort") || "latest";
+  const status = searchParams.get("status")?.split(",") || [];
+  const tags = searchParams.get("tags")?.split(",") || [];
+  const demographic = searchParams.get("demographic")?.split(",") || [];
+  const rating = searchParams.get("rating")?.split(",") || ["safe", "suggestive"];
+  
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    setSort(searchParams.get("sort") || "latest");
-    setStatus(searchParams.get("status")?.split(",") || []);
-    setTags(searchParams.get("tags")?.split(",") || []);
-    setDemographic(searchParams.get("demographic")?.split(",") || []);
-    setRating(searchParams.get("rating")?.split(",") || ["safe", "suggestive"]);
-  }, [searchParams]);
-
-  const applyFilters = (updates: any) => {
+  const applyFilters = (updates: Partial<{ sort: string; status: string[]; tags: string[]; demographic: string[]; rating: string[] }>) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", "1"); // reset page on filter change
     
@@ -78,7 +71,7 @@ export function FilterPanel() {
     if (state.demographic.length) params.set("demographic", state.demographic.join(",")); else params.delete("demographic");
     
     // Only set rating if it differs from default (safe,suggestive)
-    const ratingStr = state.rating.sort().join(",");
+    const ratingStr = [...state.rating].sort().join(",");
     if (ratingStr !== "safe,suggestive" && state.rating.length) params.set("rating", state.rating.join(",")); 
     else params.delete("rating");
 
@@ -88,7 +81,7 @@ export function FilterPanel() {
   const toggleArray = (arr: string[], val: string) => 
     arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val];
 
-  const Checkbox = ({ checked, label, onClick }: any) => (
+  const Checkbox = ({ checked, label, onClick }: { checked: boolean; label: string; onClick: () => void }) => (
     <div onClick={onClick} style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", padding: "6px 8px", borderRadius: "8px", background: checked ? "rgba(233,30,140,0.1)" : "transparent", color: checked ? "var(--accent-pink-light)" : "var(--text-secondary)", transition: "all 0.15s" }}>
       <div style={{ width: "16px", height: "16px", borderRadius: "4px", border: checked ? "none" : "1px solid var(--border-default)", background: checked ? "var(--accent-pink)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {checked && <Check size={12} fill="white" />}

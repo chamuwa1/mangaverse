@@ -20,7 +20,7 @@ const STATUS_CLASSES: Record<string, string> = {
 
 export function MangaCard({ manga, compact = false }: MangaCardProps) {
   const title = getMangaTitle(manga);
-  const coverUrl = `/api/images?url=${encodeURIComponent(getCoverUrl(manga, "512"))}`;
+  const coverUrl = getCoverUrl(manga, "512");
   const status = manga.attributes.status;
   const tags = manga.attributes.tags
     .filter((t) => t.attributes.group === "genre")
@@ -49,6 +49,7 @@ export function MangaCard({ manga, compact = false }: MangaCardProps) {
             alt={title}
             fill
             unoptimized={true}
+            referrerPolicy="no-referrer"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
             className="manga-card-image"
             style={{ objectFit: "cover", transition: "transform 0.4s ease" }}

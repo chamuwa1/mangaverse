@@ -17,7 +17,7 @@ function isAdmin(email: string | null | undefined) {
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.email || !isAdmin(session.user.email)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -26,55 +26,23 @@ export async function GET() {
   const supabase = getSupabaseAdmin();
 
   try {
-    const [{ data: bookmarkUsers }, { data: historyUsers }, { data: allRatings }, { data: lastSeenData }] =
-      await Promise.all([
-        supabase.from("bookmarks").select("user_id"),
-        supabase.from("reading_history").select("user_id"),
-        supabase.from("ratings").select("user_id, score"),
-        supabase
-          .from("reading_history")
-          .select("user_id, updated_at")
-          .order("updated_at", { ascending: false }),
-      ]);
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "50", 10);
+    const search = searchParams.get("search") || "";
 
-    const userMap: Record<
-      string,
-      { bookmarks: number; reads: number; ratings: number; lastSeen: string }
-    > = {};
-
-    bookmarkUsers?.forEach((r: { user_id: string }) => {
-      if (!userMap[r.user_id])
-        userMap[r.user_id] = { bookmarks: 0, reads: 0, ratings: 0, lastSeen: "" };
-      userMap[r.user_id].bookmarks++;
+    const { data, error } = await supabase.rpc("get_user_activity_paginated", {
+      search_query: search,
+      page_num: page,
+      page_size: limit,
     });
 
-    historyUsers?.forEach((r: { user_id: string }) => {
-      if (!userMap[r.user_id])
-        userMap[r.user_id] = { bookmarks: 0, reads: 0, ratings: 0, lastSeen: "" };
-      userMap[r.user_id].reads++;
+    if (error) throw error;
+
+    return NextResponse.json({ 
+      users: data?.users || [], 
+      total: data?.total || 0 
     });
-
-    allRatings?.forEach((r: { user_id: string }) => {
-      if (!userMap[r.user_id])
-        userMap[r.user_id] = { bookmarks: 0, reads: 0, ratings: 0, lastSeen: "" };
-      userMap[r.user_id].ratings++;
-    });
-
-    lastSeenData?.forEach((r: { user_id: string; updated_at: string }) => {
-      if (userMap[r.user_id] && !userMap[r.user_id].lastSeen) {
-        userMap[r.user_id].lastSeen = r.updated_at;
-      }
-    });
-
-    const users = Object.entries(userMap)
-      .map(([userId, v]) => ({
-        userId: userId.slice(0, 8) + "…",
-        fullId: userId,
-        ...v,
-      }))
-      .sort((a, b) => b.reads + b.bookmarks - (a.reads + a.bookmarks));
-
-    return NextResponse.json({ users, total: users.length });
   } catch (err) {
     console.error("Admin users error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

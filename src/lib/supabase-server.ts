@@ -1,4 +1,4 @@
-import { createBrowserClient } from "@supabase/ssr";
+// Removed unused createBrowserClient
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 

@@ -38,12 +38,9 @@ export default async function ChapterReaderPage({ params }: ReaderPageProps) {
 
   if (atHome.result !== "ok") notFound();
 
-  // Build proxied image URLs
+  // Build direct image URLs to bypass Vercel Origin Transfer
   const imageUrls = atHome.chapter.data.map(
-    (filename) =>
-      `/api/images?url=${encodeURIComponent(
-        `${atHome.baseUrl}/data/${atHome.chapter.hash}/${filename}`
-      )}`
+    (filename) => `${atHome.baseUrl}/data/${atHome.chapter.hash}/${filename}`
   );
 
   // Build chapter navigation list (sorted ascending)

@@ -4,41 +4,24 @@ import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
 
-// ── Simple in-memory rate limiter ──────────────────────────────────────────
-const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
-const RATE_LIMIT_MAX = 30; // max 30 page-view requests per minute per IP
-const ipHits = new Map<string, { count: number; resetAt: number }>();
+import { Redis } from "@upstash/redis";
+import { Ratelimit } from "@upstash/ratelimit";
 
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = ipHits.get(ip);
+// Initialize Upstash Redis Rate Limiter
+// We gracefully handle missing env variables to prevent crashes during local setup
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  if (!entry || now > entry.resetAt) {
-    ipHits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return false;
-  }
+const redis = redisUrl && redisToken ? Redis.fromEnv() : null;
 
-  entry.count++;
-  if (entry.count > RATE_LIMIT_MAX) {
-    return true;
-  }
-  return false;
-}
-
-// Clean up stale entries every 5 minutes to avoid memory leak
-if (typeof globalThis !== "undefined") {
-  const CLEANUP_INTERVAL = 5 * 60_000;
-  const cleanupKey = "__pageViewRateLimitCleanup";
-  if (!(globalThis as Record<string, unknown>)[cleanupKey]) {
-    (globalThis as Record<string, unknown>)[cleanupKey] = true;
-    setInterval(() => {
-      const now = Date.now();
-      for (const [ip, entry] of ipHits) {
-        if (now > entry.resetAt) ipHits.delete(ip);
-      }
-    }, CLEANUP_INTERVAL);
-  }
-}
+const ratelimit = redis
+  ? new Ratelimit({
+      redis: redis,
+      limiter: Ratelimit.slidingWindow(30, "1 m"),
+      analytics: true,
+      prefix: "@upstash/ratelimit/page-views",
+    })
+  : null;
 
 function getSupabaseAdmin() {
   return createClient(
@@ -87,8 +70,13 @@ export async function POST(req: NextRequest) {
       ?? req.headers.get("x-real-ip")
       ?? "unknown";
 
-    if (isRateLimited(ip)) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    if (ratelimit) {
+      const { success } = await ratelimit.limit(ip);
+      if (!success) {
+        return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+      }
+    } else {
+      console.warn("[MangaVerse] Skipping rate limit: Upstash Redis missing");
     }
 
     const body = await req.json();

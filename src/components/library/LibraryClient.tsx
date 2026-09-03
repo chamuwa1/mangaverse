@@ -46,9 +46,9 @@ export function LibraryClient({ bookmarks: initial, history, userName, userImage
       await deleteBookmarkAction(bookmarkId);
       setBookmarks((prev) => prev.filter((b) => b.id !== bookmarkId));
       toast.success("Removed from library");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Delete bookmark error:", error);
-      toast.error(`Failed to remove: ${error.message}`);
+      toast.error(`Failed to remove: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   };
 
@@ -61,9 +61,9 @@ export function LibraryClient({ bookmarks: initial, history, userName, userImage
       await deleteHistoryItemAction(historyId);
       setHistoryItems((prev) => prev.filter((h) => h.id !== historyId));
       toast.success("Removed from history");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Delete history error:", error);
-      toast.error(`Failed to delete: ${error.message}`);
+      toast.error(`Failed to delete: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   };
 
@@ -79,9 +79,9 @@ export function LibraryClient({ bookmarks: initial, history, userName, userImage
       setHistoryItems([]);
       setShowClearConfirm(false);
       toast.success("History cleared");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Clear all history error:", error);
-      toast.error(`Failed to clear: ${error.message}`);
+      toast.error(`Failed to clear: ${error instanceof Error ? error.message : "Unknown error"}`);
       setShowClearConfirm(false);
     }
   };

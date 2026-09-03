@@ -49,7 +49,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
   const title = getMangaTitle(manga);
   const description = getMangaDescription(manga);
   const author = getMangaAuthor(manga);
-  const coverUrl = `/api/images?url=${encodeURIComponent(getCoverUrl(manga, "512"))}`;
+  const coverUrl = getCoverUrl(manga, "512");
   const status = manga.attributes.status;
   const statusInfo = STATUS_MAP[status] ?? { label: status, class: "badge-hiatus" };
   const genres = manga.attributes.tags.filter((t) => t.attributes.group === "genre");
@@ -94,6 +94,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 fill
                 priority
                 unoptimized={true}
+                referrerPolicy="no-referrer"
                 style={{ objectFit: "cover" }}
               />
             </div>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Play, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { createClient } from "@/lib/supabase-browser";
+import { getRecentReadingHistoryAction } from "@/app/library/actions";
 
 interface HistoryRow {
   manga_id: string;
@@ -18,27 +18,28 @@ interface HistoryRow {
 export function ContinueReading() {
   const { data: session, status } = useSession();
   const [items, setItems] = useState<HistoryRow[]>([]);
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Delay setNow slightly to avoid React Compiler cascading renders warning
+    const timer = setTimeout(() => setNow(Date.now()), 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Only fetch for logged-in users
     if (status !== "authenticated" || !session?.user?.id) return;
 
-    const supabase = createClient();
-    supabase
-      .from("reading_history")
-      .select("manga_id, chapter_id, manga_title, cover_url, chapter_num, updated_at")
-      .eq("user_id", session.user.id)
-      .order("updated_at", { ascending: false })
-      .limit(10)
-      .then(({ data }) => {
-        if (data) setItems(data);
-      });
+    getRecentReadingHistoryAction().then((data) => {
+      if (data) setItems(data as HistoryRow[]);
+    });
   }, [session, status]);
 
   if (status !== "authenticated" || items.length === 0) return null;
 
   const timeAgo = (iso: string) => {
-    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000 / 60);
+    if (!now) return "";
+    const diff = Math.floor((now - new Date(iso).getTime()) / 1000 / 60);
     if (diff < 1) return "Just now";
     if (diff < 60) return `${diff}m ago`;
     const hours = Math.floor(diff / 60);

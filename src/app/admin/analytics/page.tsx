@@ -12,7 +12,7 @@ import {
   Cell,
 } from "recharts";
 import CalendarHeatmap from "react-calendar-heatmap";
-import { BarChart3, Star, Heart, Activity } from "lucide-react";
+import { Star, Heart, Activity } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface MangaItem {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Search, Download, ArrowUpDown, Shield } from "lucide-react";
+import { Search, Download, ArrowUpDown } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface UserItem {

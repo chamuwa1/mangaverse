@@ -1,4 +1,4 @@
-import { getPopularManga } from "@/lib/api/mangadex";
+// Removed unused getPopularManga
 import { MangaCard } from "@/components/catalog/MangaCard";
 import type { Metadata } from "next";
 

@@ -42,6 +42,11 @@ export function ChapterReaderClient({
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
   const readerRef = useRef<HTMLDivElement>(null);
 
+  // Reset page to 1 when navigating to a new chapter
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [chapterId, setCurrentPage]);
+
   // Save reading progress via server action (logged-in users only)
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -53,14 +58,14 @@ export function ChapterReaderClient({
           coverUrl,
           chapterId,
           chapterNum,
-          pageNum: currentPage,
+          pageNum: Math.min(currentPage, Math.max(1, imageUrls.length)),
         });
       } catch (error) {
         console.error("[MangaVerse] Failed to save reading history:", error);
       }
     }, 2000);
     return () => clearTimeout(timeout);
-  }, [session, mangaId, mangaTitle, chapterId, chapterNum, currentPage, coverUrl]);
+  }, [session, mangaId, mangaTitle, chapterId, chapterNum, currentPage, coverUrl, imageUrls.length]);
 
 
   // Keyboard navigation
@@ -69,7 +74,8 @@ export function ChapterReaderClient({
       const isRtl = direction === "rtl" && mode === "horizontal";
       if (e.key === "ArrowRight") {
         e.preventDefault();
-        isRtl ? prevPage() : nextPage(imageUrls.length);
+        if (isRtl) prevPage();
+        else nextPage(imageUrls.length);
       }
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -77,7 +83,8 @@ export function ChapterReaderClient({
       }
       if (e.key === "ArrowLeft") {
         e.preventDefault();
-        isRtl ? nextPage(imageUrls.length) : prevPage();
+        if (isRtl) nextPage(imageUrls.length);
+        else prevPage();
       }
       if (e.key === "ArrowUp") {
         e.preventDefault();
@@ -227,6 +234,8 @@ export function ChapterReaderClient({
           padding: "20px",
           borderRadius: "16px",
           minWidth: "240px",
+          background: "rgba(20, 22, 28, 0.95)",
+          backdropFilter: "blur(16px)",
           border: "1px solid var(--border-default)",
           animation: "fadeIn 0.15s ease",
         }}>
@@ -397,7 +406,11 @@ export function ChapterReaderClient({
             )}
             {/* Prev/Next overlay buttons */}
             <button
-              onClick={(e) => { e.stopPropagation(); direction === "rtl" ? nextPage(imageUrls.length) : prevPage(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (direction === "rtl") nextPage(imageUrls.length);
+                else prevPage();
+              }}
               style={{
                 position: "absolute",
                 left: 0,
@@ -410,7 +423,11 @@ export function ChapterReaderClient({
               }}
             />
             <button
-              onClick={(e) => { e.stopPropagation(); direction === "rtl" ? prevPage() : nextPage(imageUrls.length); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (direction === "rtl") prevPage();
+                else nextPage(imageUrls.length);
+              }}
               style={{
                 position: "absolute",
                 right: 0,
